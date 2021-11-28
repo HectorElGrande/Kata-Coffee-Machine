@@ -1,11 +1,13 @@
 package com.getwith;
 
+import com.getwith.utils.ErrorMessage;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -18,6 +20,9 @@ public class MakeDrinkCommandTest {
     @Mock
     private Output output;
 
+    @InjectMocks
+    private MakeDrinkCommand makeDrinkCommand;
+
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
@@ -28,8 +33,8 @@ public class MakeDrinkCommandTest {
     public void testCoffeeMachineReturnsExpectedOutputForCoffeeCombinations(
             Input input, String expectedMessage
     ) {
-        new MakeDrinkCommand().execute(input, output);
-
+        makeDrinkCommand = new MakeDrinkCommand(input, output);
+        makeDrinkCommand.execute();
         verify(output, times(1)).run(expectedMessage);
     }
 
@@ -51,7 +56,7 @@ public class MakeDrinkCommandTest {
                 {new InputArguments("chocolate", (float) 1, 0, false), "You have ordered a chocolate with 0 sugar"},
                 {new InputArguments("chocolate", (float) 0.1, 1, false), "The chocolate costs 0.6."},
 
-                {new InputArguments("foo", (float) 0.1, 1, false), "The drink type should be tea, coffee or chocolate."},
+                {new InputArguments("foo", (float) 0.1, 1, false), new ParserException(ErrorMessage.DRINK_NAME_NOT_FOUND).getLocalizedMessage()},
         };
     }
 

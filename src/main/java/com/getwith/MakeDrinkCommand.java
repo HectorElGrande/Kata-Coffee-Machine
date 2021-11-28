@@ -1,68 +1,37 @@
 package com.getwith;
 
-import java.util.Arrays;
+import com.getwith.drinks.Drink;
+import com.getwith.utils.ErrorMessage;
+import com.getwith.utils.Message;
 
 public class MakeDrinkCommand implements Command {
 
+  private CommandParser command;
+  private Input input;
+  private Output output;
+
+  public MakeDrinkCommand(Input input, Output output) {
+    this.input = input;
+    this.output = output;
+    this.command = new CommandParser(this.input);
+  }
+
   @Override
-  public void execute(Input input, Output out) {
-    Boolean hasStick = false;
-    String drinkType = input.getParameter("drinkType");
+  public void execute() {
 
-    boolean isValid = Arrays.asList("COFFEE", "CHOCOLATE", "TEA").contains(drinkType.toUpperCase());
-    if (isValid) {
-      Float money = input.getParameter("money");
+    try {
+      Drink drink = this.command.getDrink();
+      float money = this.command.getMoney();
+      String moneyString = String.format("%f", money);
+      String message = Message.ORDER + drink.getDrinkType();
 
-      switch (drinkType.toUpperCase()) {
-        case "TEA":
-          double price = 0.4;
-          if (money < price) {
-            out.run("The tea costs " + price + ".");
-            return;
-          }
-          break;
-        case "COFFEE":
-          price = 0.5;
-          if (money < price) {
-            out.run("The coffee costs " + price + ".");
-            return;
-          }
-          break;
-        case "CHOCOLATE":
-          price = 0.6;
-          if (money < price) {
-            out.run("The chocolate costs " + price + ".");
-            return;
-          }
-          break;
-      }
-
-      Integer sugarsNo = input.getParameter("sugar");
-
-      String message;
-      if (sugarsNo >= 0 && sugarsNo <= 2) {
-        message = "You have ordered a " + drinkType;
-
-        Boolean isExtraHot = input.getParameter("extraHot");
-        if (isExtraHot) {
-          message += " extra hot";
-        }
-
-        if (sugarsNo > 0) {
-          hasStick = true;
-          message += " with " + sugarsNo + " sugars (stick included)";
-        } else {
-          message += " with " + sugarsNo + " sugar";
-        }
-
-        out.run(message);
-      } else {
-        out.run("The number of sugars should be between 0 and 2.");
-      }
-
-    } else {
-      out.run("The drink type should be tea, coffee or chocolate.");
+      if (drink.paidController(money)) throw new ParserException(ErrorMessage.INCORRECT_PAID, drink.getDrinkType(), moneyString);
+      message += drink.extraOptions();
+      output.run(message);
+    }catch (ParserException parserException) {
+      output.run(parserException.getMessage());
     }
 
   }
+
 }
